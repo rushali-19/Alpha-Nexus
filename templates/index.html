@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlphaNexus - Institutional Portfolio Risk & Monte Carlo Analytics</title>
+    
+    <!-- Typography: Inter and Outfit from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Icons: FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Plotly.js for advanced plots (Efficient Frontier, Line Chart, and Histogram) -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    
+    <!-- Chart.js for clean allocations charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom styling -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Background glow elements for rich aesthetic -->
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-main">
+                <div class="logo">
+                    <i class="fa-solid fa-chart-line-up logo-icon"></i>
+                    <h1>Alpha<span>Nexus</span></h1>
+                </div>
+                <p class="subtitle">Institutional Portfolio Risk & Monte Carlo Analytics</p>
+            </div>
+            
+            <!-- Hero Stats Display (Updates dynamically) -->
+            <div class="hero-stats-bar" id="hero-stats-bar" style="display: none;">
+                <div class="hero-stat-card">
+                    <span class="hero-stat-label">Current Price</span>
+                    <span class="hero-stat-value" id="hero-current-price">-</span>
+                </div>
+                <div class="hero-stat-card">
+                    <span class="hero-stat-label">Projected Median</span>
+                    <span class="hero-stat-value" id="hero-projected-price">-</span>
+                </div>
+                <div class="hero-stat-card">
+                    <span class="hero-stat-label">95% Value at Risk (VaR)</span>
+                    <span class="hero-stat-value danger" id="hero-var">-</span>
+                </div>
+                <div class="hero-stat-card">
+                    <span class="hero-stat-label">Probability of Profit</span>
+                    <span class="hero-stat-value success" id="hero-prob-profit">-</span>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Navigation Tabs -->
+        <nav class="tabs-nav" id="main-tabs">
+            <button class="tab-btn active" data-tab="monte-carlo-tab" id="tab-mc">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Monte Carlo Simulator
+            </button>
+            <button class="tab-btn" data-tab="optimizer-tab" id="tab-opt">
+                <i class="fa-solid fa-pie-chart"></i> Portfolio Optimizer
+            </button>
+            <button class="tab-btn" data-tab="options-tab" id="tab-opt-pricing">
+                <i class="fa-solid fa-file-invoice-dollar"></i> Option Pricing (Black-Scholes)
+            </button>
+        </nav>
+        
+        <!-- Main Content Area -->
+        <main class="dashboard-content">
+            
+            <!-- Tab 1: Monte Carlo Simulator -->
+            <section id="monte-carlo-tab" class="tab-panel active">
+                <div class="grid-2-1">
+                    <!-- Simulation Settings Form -->
+                    <div class="card glass-card">
+                        <div class="card-header">
+                            <i class="fa-solid fa-sliders-up header-icon"></i>
+                            <h2>Simulation Configuration</h2>
+                        </div>
+                        <form id="mc-form">
+                            <div class="form-group">
+                                <label for="mc-tickers">Stock Tickers (comma-separated for portfolio)</label>
+                                <input type="text" id="mc-tickers" placeholder="e.g. AAPL, MSFT, GOOGL" value="AAPL" required>
+                                <span class="input-tip">Single ticker or multiple (comma separated)</span>
+                            </div>
+                            
+                            <div class="form-group" id="portfolio-weights-group" style="display: none;">
+                                <label for="mc-weights">Portfolio Weights (comma-separated, optional)</label>
+                                <input type="text" id="mc-weights" placeholder="e.g. 0.4, 0.3, 0.3" value="">
+                                <span class="input-tip">Must sum to 1.0 (defaults to equal weight)</span>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="mc-period">Historical Lookback</label>
+                                    <select id="mc-period">
+                                        <option value="6mo">6 Months</option>
+                                        <option value="1y" selected>1 Year</option>
+                                        <option value="2y">2 Years</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="mc-days">Simulated Horizon (Trading Days)</label>
+                                    <input type="number" id="mc-days" value="252" min="5" max="504">
+                                    <span class="input-tip">252 days = 1 year</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="mc-paths">Simulated Paths</label>
+                                    <input type="number" id="mc-paths" value="1000" min="10" max="10000">
+                                    <span class="input-tip">All runs are used for metrics and histogram</span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="mc-plot-paths">Paths to Plot on Graph</label>
+                                    <input type="number" id="mc-plot-paths" value="30" min="5" max="200">
+                                    <span class="input-tip">Limits rendering lag (e.g. 30 paths)</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="mc-drift-override">Drift Override (% Daily, optional)</label>
+                                    <input type="number" id="mc-drift-override" placeholder="e.g. 0.05" step="0.01">
+                                    <span class="input-tip">Directly overrides daily return drift</span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="mc-volatility-override">Vol Override (% Daily, optional)</label>
+                                    <input type="number" id="mc-volatility-override" placeholder="e.g. 1.2" step="0.01">
+                                    <span class="input-tip">Directly overrides daily volatility</span>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" id="btn-run-simulation">
+                                <i class="fa-solid fa-play"></i> Run Simulation
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Monte Carlo Summary Metrics -->
+                    <div class="card glass-card metrics-card">
+                        <div class="card-header">
+                            <i class="fa-solid fa-shield-halved header-icon"></i>
+                            <h2>Risk Analytics Summary</h2>
+                        </div>
+                        <div id="mc-metrics-container" class="metrics-grid">
+                            <div class="metric-box placeholder-text">
+                                Run a simulation to display Value at Risk (VaR), Conditional VaR (CVaR), and projected statistics.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chart 1: Monte Carlo Paths -->
+                <div class="card glass-card chart-card margin-top">
+                    <div class="card-header">
+                        <i class="fa-solid fa-chart-line header-icon"></i>
+                        <h2>Projected Price Trajectories (Monte Carlo Paths)</h2>
+                    </div>
+                    <div class="chart-wrapper">
+                        <div id="mc-chart" class="plotly-chart">
+                            <div class="loading-overlay" id="mc-loading">
+                                <div class="spinner"></div>
+                                <p>Awaiting simulation...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chart 2: Terminal Price Distribution Histogram -->
+                <div class="card glass-card chart-card margin-top">
+                    <div class="card-header">
+                        <i class="fa-solid fa-chart-simple header-icon"></i>
+                        <h2>Terminal Price Distribution (Simulation Final Prices)</h2>
+                    </div>
+                    <div class="chart-wrapper">
+                        <div id="mc-histogram" class="plotly-chart">
+                            <div class="loading-overlay" id="mc-hist-loading">
+                                <div class="spinner"></div>
+                                <p>Awaiting simulation...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Tab 2: Portfolio Optimizer -->
+            <section id="optimizer-tab" class="tab-panel">
+                <div class="grid-2-1">
+                    <!-- Settings Form -->
+                    <div class="card glass-card">
+                        <div class="card-header">
+                            <i class="fa-solid fa-sliders-up header-icon"></i>
+                            <h2>Optimizer Configuration</h2>
+                        </div>
+                        <form id="opt-form">
+                            <div class="form-group">
+                                <label for="opt-tickers">Portfolio Tickers (comma-separated, min 2)</label>
+                                <input type="text" id="opt-tickers" placeholder="e.g. AAPL, MSFT, GOOGL, AMZN" value="AAPL, MSFT, GOOGL, AMZN" required>
+                                <span class="input-tip">Minimum 2 tickers required to optimize allocation</span>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="opt-period">Lookback Period</label>
+                                    <select id="opt-period">
+                                        <option value="6mo">6 Months</option>
+                                        <option value="1y" selected>1 Year</option>
+                                        <option value="2y">2 Years</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="opt-rf">Risk-Free Rate (Annualized)</label>
+                                    <input type="number" id="opt-rf" value="0.04" step="0.01" min="0.0" max="0.2">
+                                    <span class="input-tip">e.g. 0.04 = 4.0%</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="opt-simulations">Simulated Portfolios</label>
+                                <input type="number" id="opt-simulations" value="2000" min="500" max="5000">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" id="btn-run-optimizer">
+                                <i class="fa-solid fa-bolt"></i> Generate Efficient Frontier
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Allocation Summary Card -->
+                    <div class="card glass-card">
+                        <div class="card-header">
+                            <i class="fa-solid fa-pie-chart header-icon"></i>
+                            <h2>Optimal Allocations</h2>
+                        </div>
+                        <div class="tabs-sub-nav">
+                            <button class="sub-tab-btn active" data-subtab="max-sharpe-alloc" id="subtab-sharpe">Max Sharpe Portfolio</button>
+                            <button class="sub-tab-btn" data-subtab="min-vol-alloc" id="subtab-vol">Min Volatility Portfolio</button>
+                        </div>
+                        <div class="sub-tab-content">
+                            <div id="max-sharpe-alloc" class="sub-tab-panel active">
+                                <div class="chart-wrapper-small">
+                                    <canvas id="max-sharpe-chart"></canvas>
+                                </div>
+                                <div class="allocation-details" id="max-sharpe-details">
+                                    <p class="placeholder-text">Run optimizer to display allocation details.</p>
+                                </div>
+                            </div>
+                            <div id="min-vol-alloc" class="sub-tab-panel">
+                                <div class="chart-wrapper-small">
+                                    <canvas id="min-vol-chart"></canvas>
+                                </div>
+                                <div class="allocation-details" id="min-vol-details">
+                                    <p class="placeholder-text">Run optimizer to display allocation details.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Efficient Frontier Plot -->
+                <div class="card glass-card chart-card margin-top">
+                    <div class="card-header">
+                        <i class="fa-solid fa-chart-scatter header-icon"></i>
+                        <h2>Markowitz Efficient Frontier</h2>
+                    </div>
+                    <div class="chart-wrapper">
+                        <div id="opt-chart" class="plotly-chart">
+                            <div class="loading-overlay" id="opt-loading">
+                                <div class="spinner"></div>
+                                <p>Awaiting optimization run...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Tab 3: Options Pricing -->
+            <section id="options-tab" class="tab-panel">
+                <div class="grid-2-1">
+                    <!-- Option Settings Form -->
+                    <div class="card glass-card">
+                        <div class="card-header">
+                            <i class="fa-solid fa-sliders-up header-icon"></i>
+                            <h2>Option Parameters</h2>
+                        </div>
+                        <form id="options-form">
+                            <div class="form-group">
+                                <label for="opt-ticker">Underlying Stock Ticker</label>
+                                <input type="text" id="opt-ticker" placeholder="e.g. AAPL" value="AAPL" required>
+                                <span class="input-tip">Current stock price and historical volatility will be fetched automatically</span>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="opt-strike">Strike Price ($)</label>
+                                    <input type="number" id="opt-strike" placeholder="e.g. 180" step="0.01" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="opt-expiry">Time to Expiry (Years)</label>
+                                    <input type="number" id="opt-expiry" value="0.25" step="0.01" min="0.01" max="10.0" required>
+                                    <span class="input-tip">0.25 = 3 months, 1.0 = 1 year</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="opt-rf-rate">Risk-Free Rate (Annualized)</label>
+                                    <input type="number" id="opt-rf-rate" value="0.04" step="0.01" min="0.0" max="0.2">
+                                </div>
+                                <div class="form-group">
+                                    <label for="opt-type">Option Type</label>
+                                    <select id="opt-type">
+                                        <option value="call">Call Option</option>
+                                        <option value="put">Put Option</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" id="btn-calculate-options">
+                                <i class="fa-solid fa-calculator"></i> Calculate Price & Greeks
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Greeks & Outputs -->
+                    <div class="card glass-card">
+                        <div class="card-header">
+                            <i class="fa-solid fa-circle-info header-icon"></i>
+                            <h2>Option Valuation & Greeks</h2>
+                        </div>
+                        <div id="options-metrics-container" class="options-metrics-grid">
+                            <p class="placeholder-text">Calculate pricing to display greeks and model parameters.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+        </main>
+        
+        <!-- Footer -->
+        <footer>
+            <p>&copy; 2026 AlphaNexus Analytics. Built for educational and institutional research purposes.</p>
+        </footer>
+    </div>
+</body>
+</html>
