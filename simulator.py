@@ -115,9 +115,9 @@ class MonteCarloSimulator:
             S0 = self.last_prices[ticker]
             
             # Compute parameters from historical daily returns
-            mu = float(self.mean_returns)
-            var = float(self.returns.var())
-            sigma = float(self.returns.std())
+            mu = float(self.mean_returns[ticker])
+            var = float(self.returns[ticker].var())
+            sigma = float(self.returns[ticker].std())
             
             # C++ formula: drift = mean - variance/2
             drift = mu - 0.5 * var
