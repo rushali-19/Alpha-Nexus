@@ -1,60 +1,98 @@
-# AlphaNexus - Institutional Portfolio Risk & Monte Carlo Analytics
+# Monte Carlo Stock Simulator (Web App)
 
-AlphaNexus is a web-based financial analytics dashboard designed for simulating asset price trajectories, analyzing portfolio risk, and pricing options. 
+A lightweight, high-performance web application built entirely in Python that uses Geometric Brownian Motion (GBM) and vectorized NumPy operations to project future stock trajectories based on historical financial market variance.
 
-This project ports the core logic of a C++ Monte Carlo simulator to pure Python, presenting it through a modern, responsive, and glassmorphic dark-theme web dashboard.
+This project was built from scratch as a modern web-app alternative to legacy desktop quantitative tools. It serves as a direct replacement for old C++ implementations, shifting to a highly readable Python structure combined with a reactive, interactive dashboard.
 
-## Features
+Original Repository: [keithhb33/MonteCarloStockSimulator](https://github.com/keithhb33/MonteCarloStockSimulator)  
+Username: [rushali-19](https://github.com/rushali-19)  
+Project Repository Name: **Alpha Nexus**
 
-- **Monte Carlo Stock Price Simulator**:
-  - Simulates future stock price paths using Geometric Brownian Motion (GBM).
-  - Matches the drift, volatility, and random shock algorithms of the original C++ engine.
-  - **Dynamic Double Charts**: Displays both **Monte Carlo Paths** (line chart of simulated trajectories) and **Terminal Price Distribution** (histogram of final values) for a selected stock (e.g. AAPL, MSFT) or index.
-  - Supports **custom overrides** for drift and volatility.
-  - Computes institutional-grade risk metrics including **95% and 99% Value at Risk (VaR)**, **Conditional Value at Risk (CVaR)**, and **Probability of Profit**.
-- **Portfolio Optimizer**:
-  - Implements Markowitz Mean-Variance Optimization.
-  - Simulates thousands of portfolios to draw the **Efficient Frontier**.
-  - Pinpoints and displays optimal allocations for the **Max Sharpe Ratio** and **Minimum Volatility** portfolios with interactive doughnut charts.
-- **Option Pricing (Black-Scholes Model)**:
-  - Valuation of European Call/Put options.
-  - Calculates theoretical option prices and provides real-time Greeks (**Delta, Gamma, Theta, Vega, Rho**).
+---
 
-## Tech Stack
+## 🚀 Key Features
 
-- **Backend**: Python 3.x, Flask (Web server), yfinance (Market data feed), NumPy, Pandas, SciPy (Math/Statistics)
-- **Frontend**: Vanilla HTML5, CSS3 (Custom Glassmorphism layout), Vanilla ES6 JavaScript
-- **Visualizations**: Plotly.js (Paths, Histograms, Frontier), Chart.js (Doughnut charts)
+* **Real-Time Stock Data Integration:** Fetch historical market data instantly using `yfinance` to automatically configure simulation parameters based on real assets.
+* **Vectorized Multi-Path Simulation:** High-performance, vectorized NumPy computations generating hundreds of stock price trajectories using Geometric Brownian Motion (GBM).
+* **Manual Parameter Override:** Fine-tune starting stock price, expected annual return (drift), and annual volatility to test custom market conditions or stress tests.
+* **Interactive Data Visualization:** Custom-built Streamlit UI featuring interactive Plotly charts:
+  * **Simulated Price Trajectories:** Plots paths over time, dynamically highlighting the bold median path.
+  * **Terminal Price Distribution:** Histogram of final simulated price states highlighting statistical downside (5th percentile) and upside (95th percentile).
+* **Statistical Risk Analytics:** Instantly displays Value at Risk (VaR) estimates and probability of profit (final price > starting price).
 
-## Setup & Installation
+---
 
-1. Navigate to the project directory:
-   ```bash
-   cd alpha_nexus
-   ```
+## 📊 Mathematical Foundations
 
-2. Create a virtual environment and install dependencies (already completed in this sandbox):
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
+The future trajectories are generated step-by-step using the discretized solution to the Geometric Brownian Motion (GBM) stochastic differential equation:
 
-3. Run the unit tests to verify the engine:
-   ```bash
-   python test_simulator.py
-   ```
+$$S_t = S_0 \cdot \exp\left(\left(\mu - \frac{\sigma^2}{2}\right)dt + \sigma \sqrt{dt} Z\right)$$
 
-4. Start the dashboard:
-   ```bash
-   ./start.sh
-   ```
+Where:
+* $S_t$: Simulated stock price at day $t$.
+* $S_0$: Starting stock price (e.g. the last historical close price).
+* $\mu$ (Drift): Annualized expected rate of return.
+* $\sigma$ (Volatility): Annualized standard deviation of asset log returns.
+* $dt$: Time step size (fixed at $1 / 252$ trading days).
+* $Z$: Standard normal random variable, $Z \sim \mathcal{N}(0, 1)$.
 
-5. Open your browser and navigate to:
-   ```text
-   http://localhost:5001
-   ```
+---
 
-## Disclaimer
+## 🛠️ Prerequisites & Installation
 
-This dashboard is for educational and research purposes only. It should not be used as financial advice or as a guide for live trading.
+To run the simulator locally, you need **Python 3.8+** installed.
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/rushali-19/alpha-nexus.git
+cd alpha-nexus
+```
+
+### 2. Set Up a Virtual Environment (Optional but Recommended)
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+Install all required libraries pinned in `requirements.txt`:
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 💻 Running the Application
+
+Launch the Streamlit dashboard on your local machine:
+```bash
+streamlit run app.py
+```
+
+Once running, the application will print the local URL:
+```text
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://192.168.1.100:8501
+```
+Open **`http://localhost:8501`** in your web browser to interact with the simulator.
+
+---
+
+## 📂 Project Structure
+
+```text
+alpha-nexus/
+│
+├── app.py              # Streamlit Web UI and dashboard configuration
+├── simulator.py        # Quantitative simulation engine (GBM logic, parameter estimation)
+├── requirements.txt    # Python package dependencies
+├── README.md           # Project documentation and specifications
+└── .gitignore          # Git exclusion rules for venv, cache, and logs
+```
+
+---
+
+## 🛡️ Disclaimer
+This simulator is created for educational and research purposes. The mathematical models rely on past historical performance, which is not a guarantee of future stock returns. Use at your own risk.
