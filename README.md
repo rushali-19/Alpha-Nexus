@@ -1,16 +1,13 @@
-# Monte Carlo Stock Simulator (Web App)
+# Monte Carlo Stock Simulator (Web based)
 
 A lightweight, high-performance web application built entirely in Python that uses Geometric Brownian Motion (GBM) and vectorized NumPy operations to project future stock trajectories based on historical financial market variance.
 
-This project was built from scratch as a modern web-app alternative to legacy desktop quantitative tools. It serves as a direct replacement for old C++ implementations, shifting to a highly readable Python structure combined with a reactive, interactive dashboard.
 
-Original Repository: [keithhb33/MonteCarloStockSimulator](https://github.com/keithhb33/MonteCarloStockSimulator)  
-Username: [rushali-19](https://github.com/rushali-19)  
-Project Repository Name: **Alpha Nexus**
+
 
 ---
 
-## 🚀 Key Features
+##  Key Features
 
 * **Real-Time Stock Data Integration:** Fetch historical market data instantly using `yfinance` to automatically configure simulation parameters based on real assets.
 * **Vectorized Multi-Path Simulation:** High-performance, vectorized NumPy computations generating hundreds of stock price trajectories using Geometric Brownian Motion (GBM).
@@ -22,7 +19,7 @@ Project Repository Name: **Alpha Nexus**
 
 ---
 
-## 📊 Mathematical Foundations
+##  Mathematical Foundations
 
 The future trajectories are generated step-by-step using the discretized solution to the Geometric Brownian Motion (GBM) stochastic differential equation:
 
@@ -38,7 +35,7 @@ Where:
 
 ---
 
-## 🛠️ Prerequisites & Installation
+##  Prerequisites & Installation
 
 To run the simulator locally, you need **Python 3.8+** installed.
 
@@ -80,7 +77,7 @@ Open **`http://localhost:8501`** in your web browser to interact with the simula
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```text
 alpha-nexus/
@@ -94,5 +91,5 @@ alpha-nexus/
 
 ---
 
-## 🛡️ Disclaimer
+##  Disclaimer
 This simulator is created for educational and research purposes. The mathematical models rely on past historical performance, which is not a guarantee of future stock returns. Use at your own risk.
